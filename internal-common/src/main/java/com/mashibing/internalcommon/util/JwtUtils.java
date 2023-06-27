@@ -3,6 +3,9 @@ package com.mashibing.internalcommon.util;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mashibing.internalcommon.dto.TokenResult;
@@ -23,15 +26,20 @@ public class JwtUtils {
     // 生成token 乘客是1 司机是2
     private static final String JWT_KEY_IDENTITY = "identity";
 
-    public static String generatorToken(String passengerPhone, String identity) {
+    // token类型
+    private static final String JWT_TOKEN_TYPE = "tokenType";
+
+    // token过期时间
+    private static final String JWT_TOKEN_TIME = "tokenTime";
+
+    public static String generatorToken(String passengerPhone, String identity, String token) {
         Map<String, String> map = new HashMap<>();
         map.put(JWT_KEY_PHONE, passengerPhone);
         map.put(JWT_KEY_IDENTITY, identity);
+        map.put(JWT_TOKEN_TYPE, token);
 
-        // token过期时间
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DATE, 1);
-        Date date = calendar.getTime();
+        // 防止每次生成的token一样
+        map.put(JWT_TOKEN_TIME, Calendar.getInstance().getTime().toString());
 
         JWTCreator.Builder builder = JWT.create();
 
@@ -61,9 +69,25 @@ public class JwtUtils {
         return tokenResult;
     }
 
+    /**
+     * 校验token，主要判断token是否异常
+     * @param token
+     * @return
+     */
+    public static TokenResult checkToken(String token) {
+        TokenResult tokenResult = null;
+
+        try {
+            tokenResult = JwtUtils.parseToken(token);
+        } catch (Exception e) {
+
+        }
+
+        return tokenResult;
+    }
 
     public static void main(String[] args) {
-        String s = generatorToken("17762035004", "1");
+        String s = generatorToken("17762035004", "1", "accessToken");
         System.out.println("生成后的token:" + s);
 
         TokenResult tokenResult = parseToken(s);
