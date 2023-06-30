@@ -1,4 +1,4 @@
-package com.mashibing.apipassenger.service;
+package com.mashibing.serviceprice.service;
 
 import com.mashibing.internalcommon.dto.ResponseResult;
 import com.mashibing.internalcommon.response.ForecastPriceResponse;
@@ -25,7 +25,11 @@ public class ForecastPriceService {
         log.info("目的地经度: " + destLongitude);
         log.info("目的地经度: " + destLatitude);
 
-        log.info("调用计价服务, 计算价格");
+        log.info("调用地图服务, 计算距离和时长");
+
+        log.info("读取计价规则");
+
+        log.info("根据距离、时长和计价规则，计算价格");
 
         ForecastPriceResponse forecastPriceResponse = new ForecastPriceResponse();
         forecastPriceResponse.setPrice(12.34);
