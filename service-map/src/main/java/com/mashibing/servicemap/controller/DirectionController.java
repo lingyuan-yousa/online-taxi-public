@@ -18,6 +18,7 @@ public class DirectionController {
 
     @GetMapping("/driving")
     public ResponseResult driving(@RequestBody ForecastPriceDTO forecastPriceDTO) {
+
         String depLongitude = forecastPriceDTO.getDepLongitude();
         String depLatitude = forecastPriceDTO.getDepLatitude();
         String destLongitude = forecastPriceDTO.getDestLongitude();
