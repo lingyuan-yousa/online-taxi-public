@@ -10,6 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class CarService {
@@ -25,8 +29,11 @@ public class CarService {
         car.setGmtCreate(now);
         car.setGmtModified(now);
 
+        // 保存车辆
+        carMapper.insert(car);
+
         // 获得此车辆的终端id：tid
-        ResponseResult<TerminalResponse> responseResult = serviceMapClient.addTerminal(car.getVehicleNo());
+        ResponseResult<TerminalResponse> responseResult = serviceMapClient.addTerminal(car.getVehicleNo(), car.getId() + "");
         String tid = responseResult.getData().getTid();
         car.setTid(tid);
 
@@ -38,7 +45,17 @@ public class CarService {
         car.setTrid(trid);
         car.setTrname(trname);
 
-        carMapper.insert(car);
+        carMapper.updateById(car);
+
         return ResponseResult.success("");
+    }
+
+    public ResponseResult<Car> getCarById(Long id) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+
+        List<Car> cars = carMapper.selectByMap(map);
+
+        return ResponseResult.success(cars.get(0));
     }
 }
