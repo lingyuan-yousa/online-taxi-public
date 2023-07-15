@@ -9,25 +9,35 @@ public enum CommonStatusEnum {
      */
     VERIFICATION_CODE_ERROR(1099, "验证码不正确"),
 
+
     /**
      * Token类提示: 1100-1199
      */
     TOKEN_ERROR(1199, "token错误"),
+
 
     /**
      * 用户提示：1200-1299
      */
     USER_NOT_EXISTS(1200, "当前用户不存在"),
 
+
     /**
      * 计价规则：1300-1399
      */
     PRICE_RULE_EMPTY(1300, "计价规则不存在"),
 
+    PRICE_RULE_EXISTS(1301, "计价规则存在, 不允许添加"),
+
+    PRICE_RULE_NOT_EDIT(1302, "计价规则没有变化"),
+
+
     /**
      * 地图信息：1400 ~ 1499
      */
     MAP_DISTRICT_ERROR(1400, "请求地图错误"),
+
+
 
     /**
      * 司机和车辆：1500-1599
