@@ -31,6 +31,9 @@ public enum CommonStatusEnum {
 
     PRICE_RULE_NOT_EDIT(1302, "计价规则没有变化"),
 
+    PRICE_RULE_CHANGED(1303, "计价规则有变化"),
+
+
 
     /**
      * 地图信息：1400 ~ 1499
@@ -52,6 +55,16 @@ public enum CommonStatusEnum {
 
     CAR_BIND_EXISTS(1504, "车辆已被绑定，请勿重复绑定"),
 
+
+    /**
+     * 订单 1600 - 1699
+     */
+    ORDER_GOING_ON(1600, "有正在进行的订单"),
+
+    /**
+     * 下单异常
+     */
+    DEVICE_IS_BLACK(1601, "该设备超过下单次数"),
 
     /*
      * 成功
