@@ -7,6 +7,7 @@ import com.mashibing.internalcommon.dto.ResponseResult;
 import com.mashibing.serviceprice.mapper.PriceRuleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -110,7 +111,8 @@ public class PriceRuleService {
         ResponseResult<PriceRule> newestVersionPriceRule = getNewestVersion(fareType);
 
         if (newestVersionPriceRule.getCode() == CommonStatusEnum.PRICE_RULE_EMPTY.getCode()) {
-            return ResponseResult.fail(CommonStatusEnum.PRICE_RULE_EMPTY.getCode(), CommonStatusEnum.PRICE_RULE_EMPTY.getValue());
+//            return ResponseResult.fail(CommonStatusEnum.PRICE_RULE_EMPTY.getCode(), CommonStatusEnum.PRICE_RULE_EMPTY.getValue());
+            return ResponseResult.success(false);
         }
 
         PriceRule priceRule = newestVersionPriceRule.getData();
@@ -119,6 +121,25 @@ public class PriceRuleService {
             return ResponseResult.success(false);
         } else {
             return ResponseResult.success(true);
+        }
+    }
+
+
+    public ResponseResult<Boolean> ifExists(PriceRule priceRule) {
+        String cityCode = priceRule.getCityCode();
+        String vehicleType = priceRule.getVehicleType();
+
+        QueryWrapper<PriceRule> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("city_code", cityCode);
+        queryWrapper.eq("vehicle_type", vehicleType);
+        queryWrapper.orderByDesc("fare_version");
+
+        List<PriceRule> priceRules = priceRuleMapper.selectList(queryWrapper);
+
+        if (priceRules.size() > 0) {
+            return ResponseResult.success(true);
+        } else {
+            return ResponseResult.success(false);
         }
     }
 }

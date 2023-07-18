@@ -3,6 +3,7 @@ package com.mashibing.serviceprice.controller;
 
 import com.mashibing.internalcommon.dto.PriceRule;
 import com.mashibing.internalcommon.dto.ResponseResult;
+import com.mashibing.internalcommon.request.PriceRuleNewRequest;
 import com.mashibing.serviceprice.service.PriceRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -49,13 +50,22 @@ public class PriceRuleController {
 
     /**
      * 判断规则是否是最新
-     * @param fareType
-     * @param fareVersion
+     * @param priceRuleNewRequest
      * @return
      */
-    @GetMapping("/is-new")
-    public ResponseResult<Boolean> isNew(@RequestParam String fareType, @RequestParam Integer fareVersion) {
+    @PostMapping("/is-new")
+    public ResponseResult<Boolean> isNew(@RequestBody PriceRuleNewRequest priceRuleNewRequest) {
+        return priceRuleService.isNew(priceRuleNewRequest.getFareType(), priceRuleNewRequest.getFareVersion());
+    }
 
-        return priceRuleService.isNew(fareType, fareVersion);
+    /**
+     * 根据城市编码和车型查询计价规则是否存在
+     * @param priceRule
+     * @return
+     */
+    @PostMapping("/if-exists")
+    public ResponseResult<Boolean> ifExists(@RequestBody PriceRule priceRule) {
+
+        return priceRuleService.ifExists(priceRule);
     }
 }

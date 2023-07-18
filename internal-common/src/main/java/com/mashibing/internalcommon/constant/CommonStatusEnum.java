@@ -55,6 +55,10 @@ public enum CommonStatusEnum {
 
     CAR_BIND_EXISTS(1504, "车辆已被绑定，请勿重复绑定"),
 
+    CITY_DRIVER_EMPTY(1505, "当前城市没有可用司机"),
+
+    AVAILABLE_DRIVER_EMPTY(1506, "可用司机的司机为空"),
+
 
     /**
      * 订单 1600 - 1699
@@ -65,6 +69,9 @@ public enum CommonStatusEnum {
      * 下单异常
      */
     DEVICE_IS_BLACK(1601, "该设备超过下单次数"),
+
+    CITY_SERVICE_NOT_SERVICE(1602, "当前城市不提供叫车服务"),
+
 
     /*
      * 成功

@@ -1,14 +1,19 @@
 package com.mashibing.serviceDriverUser.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.mashibing.internalcommon.constant.CommonStatusEnum;
 import com.mashibing.internalcommon.constant.DriverCarConstants;
+import com.mashibing.internalcommon.dto.DriverCarBindingRelationship;
 import com.mashibing.internalcommon.dto.DriverUser;
 import com.mashibing.internalcommon.dto.DriverUserWorkStatus;
 import com.mashibing.internalcommon.dto.ResponseResult;
+import com.mashibing.internalcommon.response.OrderDriverResponse;
+import com.mashibing.serviceDriverUser.mapper.DriverCarBindingRelationshipMapper;
 import com.mashibing.serviceDriverUser.mapper.DriverUserMapper;
 import com.mashibing.serviceDriverUser.mapper.DriverUserWorkStatusMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -72,5 +77,37 @@ public class DriverUserService {
         DriverUser driverUser = driverUsers.get(0);
 
         return ResponseResult.success(driverUser);
+    }
+
+    @Autowired
+    DriverCarBindingRelationshipMapper driverCarBindingRelationshipMapper;
+
+    public ResponseResult<OrderDriverResponse> getAvailableDriver(Long carId) {
+        QueryWrapper<DriverCarBindingRelationship> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("car_id", carId);
+        queryWrapper.eq("bind_state", DriverCarConstants.DRIVER_CAR_BIND);
+
+        DriverCarBindingRelationship driverCarBindingRelationship = driverCarBindingRelationshipMapper.selectOne(queryWrapper);
+        Long driverId = driverCarBindingRelationship.getDriverId();
+
+        QueryWrapper<DriverUserWorkStatus> queryWrapper1 = new QueryWrapper<>();
+        queryWrapper1.eq("driver_id", driverId);
+        queryWrapper1.eq("work_status", DriverCarConstants.DRIVER_WORK_STATUS_START);
+
+        DriverUserWorkStatus driverUserWorkStatus = driverUserWorkStatusMapper.selectOne(queryWrapper1);
+        if (null == driverUserWorkStatus) {
+            return ResponseResult.fail(CommonStatusEnum.CITY_DRIVER_EMPTY.getCode(), CommonStatusEnum.CITY_DRIVER_EMPTY.getValue());
+        } else {
+            QueryWrapper<DriverUser> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("id", driverId);
+            DriverUser driverUser = driverUserMapper.selectOne(queryWrapper2);
+
+            OrderDriverResponse orderDriverResponse = new OrderDriverResponse();
+            orderDriverResponse.setCarId(carId);
+            orderDriverResponse.setDriverId(driverId);
+            orderDriverResponse.setDriverPhone(driverUser.getDriverPhone());
+
+            return ResponseResult.success(orderDriverResponse);
+        }
     }
 }

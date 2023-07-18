@@ -41,8 +41,7 @@ public class MapDirectionClient {
         urlBuild.append("&");
         urlBuild.append("key=" + amapKey);
 
-        log.info(urlBuild.toString());
-
+        log.info("高德地图，路径规划， 请求信息：" + urlBuild.toString());
         // 请求高德接口
         ResponseEntity<String> directionEntity = restTemplate.getForEntity(urlBuild.toString(), String.class);
         String directionString = directionEntity.getBody();
