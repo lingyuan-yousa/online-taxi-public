@@ -3,11 +3,13 @@ package com.mashibing.serviceorder.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.mashibing.internalcommon.constant.CommonStatusEnum;
 import com.mashibing.internalcommon.constant.OrderConstants;
+import com.mashibing.internalcommon.dto.Car;
 import com.mashibing.internalcommon.dto.OrderInfo;
 import com.mashibing.internalcommon.dto.PriceRule;
 import com.mashibing.internalcommon.dto.ResponseResult;
 import com.mashibing.internalcommon.request.OrderRequest;
 import com.mashibing.internalcommon.request.PriceRuleNewRequest;
+import com.mashibing.internalcommon.response.OrderDriverResponse;
 import com.mashibing.internalcommon.response.TerminalResponse;
 import com.mashibing.internalcommon.util.RedisPrefixUtils;
 import com.mashibing.serviceorder.mapper.OrderInfoMapper;
@@ -83,8 +85,8 @@ public class OrderInfoService {
             return ResponseResult.fail(CommonStatusEnum.CITY_SERVICE_NOT_SERVICE.getCode(), CommonStatusEnum.CITY_SERVICE_NOT_SERVICE.getValue());
         }
 
-        // 判断是否有进行中的订单
-        if (isOrderGoingon(orderRequest.getPassengerId()) > 0) {
+        // 判断乘客 是否有进行中的订单
+        if (isPassengerOrderGoingon(orderRequest.getPassengerId()) > 0) {
             return ResponseResult.fail(CommonStatusEnum.ORDER_GOING_ON.getCode(), CommonStatusEnum.ORDER_GOING_ON.getValue());
         }
 
@@ -107,13 +109,12 @@ public class OrderInfoService {
         return ResponseResult.success("");
     }
 
-
     /**
      * 是否有业务中的订单
      * @param passengerId
      * @return
      */
-    public int isOrderGoingon(Long passengerId) {
+    public int isPassengerOrderGoingon(Long passengerId) {
         // 判断正在进行的订单不允许下单
         QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("passenger_id", passengerId);
@@ -130,6 +131,31 @@ public class OrderInfoService {
 
         return validOrderNumber;
     }
+
+
+    /**
+     * 是否有业务中的订单
+     * @param driverId
+     * @return
+     */
+    public int isDriverOrderGoingon(Long driverId) {
+        // 判断正在进行的订单不允许下单
+        QueryWrapper<OrderInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("driver_id", driverId);
+        queryWrapper.and(wrapper->wrapper.eq("order_status",OrderConstants.DRIVER_RECEIVE_ORDER)
+                .or().eq("order_status",OrderConstants.DRIVER_TO_PICK_UP_PASSENGER)
+                .or().eq("order_status",OrderConstants.DRIVER_ARRIVED_DEPARTURE)
+                .or().eq("order_status",OrderConstants.PICK_UP_PASSENGER)
+        );
+
+        Integer validOrderNumber = orderInfoMapper.selectCount(queryWrapper);
+
+        log.info("司机Id: " + driverId + ", 正在进行订单的数量: " + validOrderNumber);
+
+        return validOrderNumber;
+    }
+
+
 
     /**
      * 是否是黑名单
@@ -175,6 +201,7 @@ public class OrderInfoService {
     @Autowired
     ServiceMapClient serviceMapClient;
 
+
     /**
      * 实时订单派单逻辑
      * @param orderInfo
@@ -191,6 +218,9 @@ public class OrderInfoService {
         radiusList.add(5000);
 
         ResponseResult<List<TerminalResponse>> listResponseResult = null;
+
+        radius:
+
         for (int i = 0; i < radiusList.size(); ++i) {
             Integer radius = radiusList.get(i);
             listResponseResult = serviceMapClient.terminalAroundSearch(center, radius);
@@ -200,11 +230,57 @@ public class OrderInfoService {
             // 获得终端
 
             // 解析终端  [{"carId":1679506335153090561,"tid":"726866127"}]
-            JSONArray result = JSONArray.fromObject(listResponseResult.getData());
-            for (int j = 0; j < result.size(); ++j) {
-                JSONObject jsonObject = result.getJSONObject(j);
-                String carIdString = jsonObject.getString("carId");
-                Long carId = Long.parseLong(carIdString);
+//            JSONArray result = JSONArray.fromObject(listResponseResult.getData());
+            List<TerminalResponse> data = listResponseResult.getData();
+            for (int j = 0; j < data.size(); ++j) {
+                TerminalResponse terminalResponse = data.get(j);
+                Long carId = terminalResponse.getCarId();
+
+                String longitude = terminalResponse.getLongitude();
+                String latitude = terminalResponse.getLatitude();
+
+                // 查询是否有carId对应的可用派单司机
+                ResponseResult<OrderDriverResponse> availableDriver = serviceDriverUserClient.getAvailableDriver(carId);
+                if (availableDriver.getCode() == CommonStatusEnum.AVAILABLE_DRIVER_EMPTY.getCode()) {
+                    log.info("没有车辆Id:" + carId + "对应的可用司机");
+                    continue;
+                } else {
+                    log.info("车辆ID：" + carId + "找到了正在出车的司机");
+
+                    OrderDriverResponse orderDriverResponse = availableDriver.getData();
+                    long driverId = orderDriverResponse.getDriverId();
+                    String driverPhone = orderDriverResponse.getDriverPhone();
+                    String licenseId = orderDriverResponse.getLicenseId();
+                    String vehicleNo = orderDriverResponse.getVehicleNo();
+
+                    // 判断司机 是否有进行中的订单
+                    if (isDriverOrderGoingon(driverId) > 0) {
+                        continue;
+                    }
+
+                    // 订单直接匹配司机
+                    // 查询当前车辆信息
+                    QueryWrapper<Car> carQueryWrapper = new QueryWrapper<>();
+                    carQueryWrapper.eq("id", carId);
+
+                    // 查询当前司机信息
+                    orderInfo.setDriverId(driverId);
+                    orderInfo.setDriverPhone(driverPhone);
+                    orderInfo.setCarId(carId);
+
+                    orderInfo.setReceiveOrderCarLongitude(longitude);
+                    orderInfo.setReceiveOrderCarLatitude(latitude);
+
+                    orderInfo.setReceiveOrderTime(LocalDateTime.now());
+                    orderInfo.setLicenseId(licenseId);
+                    orderInfo.setVehicleNo(vehicleNo);
+                    orderInfo.setOrderStatus(OrderConstants.DRIVER_RECEIVE_ORDER);
+
+
+                    orderInfoMapper.updateById(orderInfo);
+                    // 退出 不再进行司机的查找
+                    break radius;
+                }
 
             }
 
