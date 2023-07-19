@@ -1,7 +1,11 @@
 package com.mashibing.apipassenger.controller;
 
+import com.mashibing.apipassenger.remote.ServiceOrderClient;
+import com.mashibing.internalcommon.dto.OrderInfo;
 import com.mashibing.internalcommon.dto.ResponseResult;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.retry.Retry;
 
@@ -31,5 +35,21 @@ public class TestController {
     @GetMapping("/noauthTest")
     public ResponseResult noauthTest() {
         return ResponseResult.success("noauth test");
+    }
+
+    @Autowired
+    ServiceOrderClient serviceOrderClient;
+
+    /**
+     * 测试派单逻辑
+     * @param orderId
+     * @return
+     */
+    @GetMapping("/test-real-time-order/{orderId}")
+    public String dispatchRealTimeOrder(@PathVariable("orderId") Long orderId) {
+
+        System.out.println("并发测试：api-passenger: " + orderId);
+        serviceOrderClient.dispatchRealTimeOrder(orderId);
+        return "test-real-time-order--success";
     }
 }
