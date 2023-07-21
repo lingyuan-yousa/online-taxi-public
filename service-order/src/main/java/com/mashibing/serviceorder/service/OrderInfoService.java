@@ -2,6 +2,7 @@ package com.mashibing.serviceorder.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.mashibing.internalcommon.constant.CommonStatusEnum;
+import com.mashibing.internalcommon.constant.IdentityConstants;
 import com.mashibing.internalcommon.constant.OrderConstants;
 import com.mashibing.internalcommon.dto.Car;
 import com.mashibing.internalcommon.dto.OrderInfo;
@@ -16,8 +17,10 @@ import com.mashibing.serviceorder.mapper.OrderInfoMapper;
 import com.mashibing.serviceorder.remote.ServiceDriverUserClient;
 import com.mashibing.serviceorder.remote.ServiceMapClient;
 import com.mashibing.serviceorder.remote.ServicePriceClient;
+import com.mashibing.serviceorder.remote.ServiceSsePushClient;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -203,6 +206,9 @@ public class OrderInfoService {
     @Autowired
     RedissonClient redissonClient;
 
+    @Autowired
+    ServiceSsePushClient serviceSsePushClient;
+
     /**
      * 实时订单派单逻辑
      * @param orderInfo
@@ -288,18 +294,47 @@ public class OrderInfoService {
 
                     lock.unlock();
 
+                    // 通知司机
+                    JSONObject driverContent = new JSONObject();
+                    driverContent.put("passengerId", orderInfo.getPassengerId());
+                    driverContent.put("passengerPhone", orderInfo.getPassengerPhone());
+                    driverContent.put("departure", orderInfo.getDeparture());
+                    driverContent.put("depLongitude", orderInfo.getDepLongitude());
+                    driverContent.put("depLatitude", orderInfo.getDepLatitude());
+
+                    driverContent.put("destination", orderInfo.getDestination());
+                    driverContent.put("destLongitude", orderInfo.getDestLongitude());
+                    driverContent.put("destLatitude", orderInfo.getDestLatitude());
+
+                    serviceSsePushClient.push(driverId, IdentityConstants.DRIVER_IDENTITY, driverContent.toString());
+
+
+                    // 通知乘客
+                    JSONObject passengerContent = new JSONObject();
+                    passengerContent.put("driverId", orderInfo.getDriverPhone());
+                    passengerContent.put("driverPhone", orderInfo.getDriverPhone());
+                    passengerContent.put("vehicle", orderInfo.getVehicleNo());
+
+                    // 车辆信息
+                    ResponseResult<Car> carById = serviceDriverUserClient.getCarById(carId);
+                    Car carRemote = carById.getData();
+
+                    passengerContent.put("brand", carRemote.getBrand());
+                    passengerContent.put("model", carRemote.getModel());
+                    passengerContent.put("vehicleColor", carRemote.getVehicleColor());
+
+                    passengerContent.put("receiveOrderCarLongitude", orderInfo.getReceiveOrderCarLongitude());
+                    passengerContent.put("receiveOrderCarLatitude", orderInfo.getReceiveOrderCarLatitude());
+
+                    serviceSsePushClient.push(orderInfo.getPassengerId(), IdentityConstants.PASSENGER_IDENTITY, passengerContent.toString());
+
+
                     // 退出 不再进行司机的查找
                     break radius;
                 }
 
             }
 
-
-            // 根据解析出来的终端，查询车辆信息
-
-            // 找到符合的车辆，进行派单
-
-            // 如果派单成功，则退出循环
         }
 
     }
