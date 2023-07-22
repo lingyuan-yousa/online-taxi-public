@@ -49,6 +49,9 @@ public class OrderInfo implements Serializable {
      */
     private Long carId;
 
+    /**
+     * 车辆类型
+     */
     private String vehicleType;
 
     /**
@@ -218,6 +221,9 @@ public class OrderInfo implements Serializable {
      */
     private Integer orderStatus;
 
+    /**
+     * 价格
+     */
     private Double price;
 
     /**

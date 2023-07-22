@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -298,9 +299,20 @@ public class OrderInfoService {
                     String licenseId = orderDriverResponse.getLicenseId();
                     String vehicleNo = orderDriverResponse.getVehicleNo();
 
+                    String vehicleTypeFromCar = orderDriverResponse.getVehicleType();
+
+                    // 判断已有的车辆类型与订单所需的车型是否一致
+                    String vehicleType = orderInfo.getVehicleType();
+                    if (!vehicleType.trim().equals(vehicleTypeFromCar.trim())) {
+                        System.out.println("车型不符合");
+                        continue ;
+                    }
+
+
                     String lockKey = (driverId + "").intern();
                     RLock lock = redissonClient.getLock(lockKey);
                     lock.lock();
+
 
                     // 判断司机 是否有进行中的订单
                     if (isDriverOrderGoingon(driverId) > 0) {
@@ -477,11 +489,21 @@ public class OrderInfoService {
 
         ResponseResult<TrsearchResponse> trsearch = serviceMapClient.trsearch(tid, startTime, endTime);
         TrsearchResponse data = trsearch.getData();
-        orderInfo.setDriveMile(data.getDriveMile());
-        orderInfo.setDriveTime(data.getDriveTime());
 
+        Long driveMile = data.getDriveMile();
+        Long driveTime = data.getDriveTime();
+        orderInfo.setDriveMile(driveMile);
+        orderInfo.setDriveTime(driveTime);
+
+        // 获取价格
+        String address = orderInfo.getAddress();
+        String vehicleType = orderInfo.getVehicleType();
+        ResponseResult<Double> doubleResponseResult = servicePriceClient.calculatePrice(driveMile.intValue(), driveTime.intValue(), address, vehicleType);
+        Double price = doubleResponseResult.getData();
+        orderInfo.setPrice(price);
 
         orderInfoMapper.updateById(orderInfo);
         return ResponseResult.success("");
     }
+
 }
