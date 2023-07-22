@@ -51,6 +51,7 @@ public class OrderRequest {
     /**
      * 司机去接乘客出发时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime toPickUpPassengerTime;
 
     /**
