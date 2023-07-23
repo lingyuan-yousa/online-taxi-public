@@ -3,16 +3,18 @@ package com.mashibing.pay;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @RestController
 @EnableDiscoveryClient
-public class TestAlipayApplication {
+@EnableFeignClients
+public class ServicePayApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(TestAlipayApplication.class);
+        SpringApplication.run(ServicePayApplication.class);
     }
 
     @PostMapping("/test")
@@ -20,4 +22,6 @@ public class TestAlipayApplication {
         System.out.println("支付宝回调啦");
         return "外网穿透测试";
     }
+
+
 }
