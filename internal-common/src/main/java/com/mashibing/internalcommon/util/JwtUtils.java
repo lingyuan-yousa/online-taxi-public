@@ -32,9 +32,9 @@ public class JwtUtils {
     // token过期时间
     private static final String JWT_TOKEN_TIME = "tokenTime";
 
-    public static String generatorToken(String passengerPhone, String identity, String token) {
+    public static String generatorToken(String phone, String identity, String token) {
         Map<String, String> map = new HashMap<>();
-        map.put(JWT_KEY_PHONE, passengerPhone);
+        map.put(JWT_KEY_PHONE, phone);
         map.put(JWT_KEY_IDENTITY, identity);
         map.put(JWT_TOKEN_TYPE, token);
 

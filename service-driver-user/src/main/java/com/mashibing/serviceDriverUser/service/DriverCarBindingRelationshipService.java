@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.mashibing.internalcommon.constant.CommonStatusEnum;
 import com.mashibing.internalcommon.constant.DriverCarConstants;
 import com.mashibing.internalcommon.dto.DriverCarBindingRelationship;
+import com.mashibing.internalcommon.dto.DriverUser;
 import com.mashibing.internalcommon.dto.ResponseResult;
 import com.mashibing.serviceDriverUser.mapper.DriverCarBindingRelationshipMapper;
+import com.mashibing.serviceDriverUser.mapper.DriverUserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,9 @@ public class DriverCarBindingRelationshipService {
 
     @Autowired
     DriverCarBindingRelationshipMapper driverCarBindingRelationshipMapper;
+
+    @Autowired
+    DriverUserMapper driverUserMapper;
 
     public ResponseResult bind(DriverCarBindingRelationship driverCarBindingRelationship) {
         // 判断，参数中的车辆和司机，已经做过绑定，则不允许再次绑定
@@ -92,4 +97,21 @@ public class DriverCarBindingRelationshipService {
 
         return ResponseResult.success("");
     }
+
+    public ResponseResult<DriverCarBindingRelationship> getDriverCarBindingRelationshipByDriverPhone(String driverPhone) {
+        QueryWrapper<DriverUser> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("driver_phone", driverPhone);
+
+        DriverUser driverUser = driverUserMapper.selectOne(queryWrapper);
+        Long driverId = driverUser.getId();
+
+        QueryWrapper<DriverCarBindingRelationship> driverCarBindingRelationshipQueryWrapper = new QueryWrapper<>();
+        driverCarBindingRelationshipQueryWrapper.eq("driver_id", driverId);
+        driverCarBindingRelationshipQueryWrapper.eq("bind_state", DriverCarConstants.DRIVER_CAR_BIND);
+
+        DriverCarBindingRelationship driverCarBindingRelationship = driverCarBindingRelationshipMapper.selectOne(driverCarBindingRelationshipQueryWrapper);
+
+        return ResponseResult.success(driverCarBindingRelationship);
+    }
+
 }

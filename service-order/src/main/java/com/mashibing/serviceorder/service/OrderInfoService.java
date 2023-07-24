@@ -355,6 +355,7 @@ public class OrderInfoService {
 
                     // 通知司机
                     JSONObject driverContent = new JSONObject();
+                    driverContent.put("orderId", orderInfo.getId());
                     driverContent.put("passengerId", orderInfo.getPassengerId());
                     driverContent.put("passengerPhone", orderInfo.getPassengerPhone());
                     driverContent.put("departure", orderInfo.getDeparture());
@@ -370,6 +371,7 @@ public class OrderInfoService {
 
                     // 通知乘客
                     JSONObject passengerContent = new JSONObject();
+                    passengerContent.put("orderId", orderInfo.getId());
                     passengerContent.put("driverId", orderInfo.getDriverPhone());
                     passengerContent.put("driverPhone", orderInfo.getDriverPhone());
                     passengerContent.put("vehicle", orderInfo.getVehicleNo());
@@ -618,5 +620,15 @@ public class OrderInfoService {
         orderInfoMapper.updateById(orderInfo);
 
         return ResponseResult.success();
+    }
+
+    public ResponseResult pushPayInfo(OrderRequest orderRequest) {
+        Long orderId = orderRequest.getOrderId();
+
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        orderInfo.setOrderStatus(OrderConstants.TO_START_PAY);
+        orderInfoMapper.updateById(orderInfo);
+
+        return ResponseResult.success("");
     }
 }
